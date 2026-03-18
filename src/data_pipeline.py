@@ -40,21 +40,31 @@ def download_stock_data(ticker):
         df = yf.download(
             ticker,
             start="2018-01-01",
-            progress=False
+            progress=False,
+            auto_adjust=False
         )
 
-        if len(df) > 0:
+        if len(df) == 0:
+            return
 
-            file_path = f"{DATA_FOLDER}/{ticker}.csv"
+        # Convert index (Date) to column
+        df.reset_index(inplace=True)
 
-            df.to_csv(file_path)
+        # Flatten multi-index columns if present
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = [col[0] for col in df.columns]
 
-            print(f"{ticker} saved")
+        # Standardize column names
+        df.columns = [c.lower().replace(" ", "_") for c in df.columns]
+
+        file_path = f"{DATA_FOLDER}/{ticker}.csv"
+
+        df.to_csv(file_path, index=False)
+
+        print(f"{ticker} saved")
 
     except Exception as e:
-
         print(f"Error downloading {ticker}: {e}")
-
 
 # Main function that runs the pipeline
 def main():
